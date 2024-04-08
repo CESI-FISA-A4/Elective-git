@@ -16,7 +16,10 @@ module.exports = {
                     entrypointUrl: "/api/git",
                     redirectUrl: "/api/git",
                     routeProtections: [
-                        
+                        { methods: ["GET"], route: "/", roles: ["developper", "admin"] },
+                        { methods: ["GET"], route: "/:repo", roles: ["developper", "admin"] },
+                        { methods: ["GET"], route: "/:repo/:branch", roles: ["developper", "admin"] },
+                        { methods: ["GET"], route: "/:repo/:branch/*", roles: ["developper", "admin"] },
                     ]
                 }
             });

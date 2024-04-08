@@ -94,6 +94,8 @@ module.exports = {
       if(!path.endsWith('.js') && !path.endsWith('.css')) return errors.NotFound;
       try {
         const data = await octokit.request("GET https://api.github.com/repos/CESI-FISA-A4/{repo}/contents{folder}?ref={branch}", {repo: repo, branch: branch, folder: path});
+        // https://raw.githubusercontent.com/CESI-FISA-A4/Elective-git/feature%2Fbase/index.js 
+        // fonctionne aussi mais récup juste le fichier
         let content = Buffer.from(data.data.content, 'base64').toString('ascii');
         return {name: data.data.name, path: data.data.path, size: data.data.size, content: content};  
       }

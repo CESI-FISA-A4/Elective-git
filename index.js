@@ -8,7 +8,7 @@ const fastify = require('fastify')();
 
 // Connect to DB
 setupSwagger(fastify);
-//subscribeToApiGateway();
+subscribeToApiGateway();
 
 /** -------------------------------------------Account------------------------------------------------- */
 fastify.register(gitRoutes, { prefix: '/api/git' });
