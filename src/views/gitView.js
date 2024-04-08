@@ -26,8 +26,8 @@ const errors = {
         err.statusCode = 403;
         return err;
     })(),
-    fileNotFound: (() => {
-      const err = Error("file not found");
+    NotFound: (() => {
+      const err = Error("Not found");
       err.statusCode = 404;
       return err;
     })(),
@@ -42,18 +42,23 @@ const merge = (a, b, predicate = (a, b) => a === b) => {
 }
 
 const getAllFiles = async (repo, branch, folder) => {
-  const data = await octokit.request("GET https://api.github.com/repos/CESI-FISA-A4/{repo}/contents{folder}?ref={branch}", {repo: repo, branch: branch, folder: folder});
-      let elements = [];
-      for(let i in data.data) {
-        if(data.data[i].type == 'dir') {
-          const e = await getAllFiles(repo, branch, `${folder}/${data.data[i].name}`);
-          elements = merge(elements, e);
-        }
-        else if(data.data[i].type == 'file' && (data.data[i].name.endsWith('.js') || data.data[i].name.endsWith('.css'))) {
-          elements.push(data.data[i].name);
-        }
+  let elements = [];
+  try {
+    const data = await octokit.request("GET https://api.github.com/repos/CESI-FISA-A4/{repo}/contents{folder}?ref={branch}", {repo: repo, branch: branch, folder: folder});
+    for(let i in data.data) {
+      if(data.data[i].type == 'dir') {
+        const e = await getAllFiles(repo, branch, `${folder}/${data.data[i].name}`);
+        if(e != errors.NotFound) elements = merge(elements, e);
       }
-      return elements;
+      else if(data.data[i].type == 'file' && (data.data[i].name.endsWith('.js') || data.data[i].name.endsWith('.css'))) {
+        elements.push({name: data.data[i].name, path: data.data[i].path, size: data.data[i].size});
+      }
+    }
+    return elements
+  }
+  catch(e) {
+    return errors.NotFound;
+  }
 }
 
 module.exports = {
@@ -67,12 +72,17 @@ module.exports = {
     },
     getBranches: async(req, res) => {
       const { repo } = req.params;
-      const data = await octokit.request("GET https://api.github.com/repos/CESI-FISA-A4/{repo}/branches", {repo: repo});
-      let elements = [];
-      for(let i in data.data) {
-        elements.push(data.data[i].name);
+      try {
+        const data = await octokit.request("GET https://api.github.com/repos/CESI-FISA-A4/{repo}/branches", {repo: repo});
+        let elements = [];
+        for(let i in data.data) {
+          elements.push({name: data.data[i].name, protected: data.data[i].protected});
+        }
+        return elements;
       }
-      return elements;
+      catch(e) {
+        return errors.NotFound;
+      }
     },
     getFiles: async(req, res) => {
       const { repo, branch } = req.params;
@@ -81,9 +91,24 @@ module.exports = {
     getFile: async(req, res) => {
       const { repo, branch } = req.params;
       const path = req.params['*'];
-      if(!path.endsWith('.js') && !path.endsWith('.css')) return errors.fileNotFound;
-      const data = await octokit.request("GET https://api.github.com/repos/CESI-FISA-A4/{repo}/contents{folder}?ref={branch}", {repo: repo, branch: branch, folder: path});
-      var buf = Buffer.from(data.data.content, 'base64');
-      return buf;
-    }
+      if(!path.endsWith('.js') && !path.endsWith('.css')) return errors.NotFound;
+      try {
+        const data = await octokit.request("GET https://api.github.com/repos/CESI-FISA-A4/{repo}/contents{folder}?ref={branch}", {repo: repo, branch: branch, folder: path});
+        let content = Buffer.from(data.data.content, 'base64').toString('ascii');
+        return {name: data.data.name, path: data.data.path, size: data.data.size, content: content};  
+      }
+      catch(e) {
+        return errors.NotFound;
+      }
+    },
+    commit: async(req, res) => {
+      //todo
+    },
+    pullRequest: async(req, res) => {
+      //todo ?
+    },
+    download: async(req, res) => {
+      //todo
+    },
+    
 }

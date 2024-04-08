@@ -2,10 +2,10 @@ const {  } = require('../utils/swagger.schema');
 const { getRepos, getBranches, getFiles, getFile } = require('../views/gitView');
 const gitRoutes = function(instance, opts, next) {
 
-    instance.get('/repos/', getRepos);
-    instance.get('/:repo/branches', getBranches);
-    instance.get('/:repo/branches/:branch/', getFiles);
-    instance.get('/:repo/branches/:branch/*', getFile);
+    instance.get('/', getRepos);
+    instance.get('/:repo/', getBranches);
+    instance.get('/:repo/:branch/', getFiles);
+    instance.get('/:repo/:branch/*', getFile);
     next();
 };
 
