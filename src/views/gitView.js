@@ -26,6 +26,11 @@ const errors = {
         err.statusCode = 403;
         return err;
     })(),
+    fileNotFound: (() => {
+      const err = Error("file not found");
+      err.statusCode = 404;
+      return err;
+    })(),
   }
 
 // function to merge arrays
@@ -37,16 +42,14 @@ const merge = (a, b, predicate = (a, b) => a === b) => {
 }
 
 const getAllFiles = async (repo, branch, folder) => {
-  console.log(folder);
   const data = await octokit.request("GET https://api.github.com/repos/CESI-FISA-A4/{repo}/contents{folder}?ref={branch}", {repo: repo, branch: branch, folder: folder});
       let elements = [];
       for(let i in data.data) {
-        console.log({name: data.data[i].name, type: data.data[i].type});
         if(data.data[i].type == 'dir') {
           const e = await getAllFiles(repo, branch, `${folder}/${data.data[i].name}`);
           elements = merge(elements, e);
         }
-        else if(data.data[i].type == 'file' && data.data[i].name.endsWith('.js')) {
+        else if(data.data[i].type == 'file' && (data.data[i].name.endsWith('.js') || data.data[i].name.endsWith('.css'))) {
           elements.push(data.data[i].name);
         }
       }
@@ -74,5 +77,13 @@ module.exports = {
     getFiles: async(req, res) => {
       const { repo, branch } = req.params;
       return getAllFiles(repo, branch, '');
+    },
+    getFile: async(req, res) => {
+      const { repo, branch } = req.params;
+      const path = req.params['*'];
+      if(!path.endsWith('.js') && !path.endsWith('.css')) return errors.fileNotFound;
+      const data = await octokit.request("GET https://api.github.com/repos/CESI-FISA-A4/{repo}/contents{folder}?ref={branch}", {repo: repo, branch: branch, folder: path});
+      var buf = Buffer.from(data.data.content, 'base64');
+      return buf;
     }
 }
