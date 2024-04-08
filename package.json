@@ -1,0 +1,28 @@
+{
+    "name": "api-node-js",
+    "version": "1.0.0",
+    "description": "Elective WEB",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node -r dotenv/config index.js dotenv_config_path=./.env.production",
+        "start:dev": "node -r dotenv/config index.js dotenv_config_path=./.env.development.local"
+    },
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "author": "4lexDel",
+    "license": "ISC",
+    "homepage": "",
+    "dependencies": {
+        "@fastify/swagger": "^8.14.0",
+        "@fastify/swagger-ui": "^3.0.0",
+        "axios": "^1.6.8",
+        "body-parser": "^1.20.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "fastify": "^4.26.2",
+        "octokit": "^3.2.0"
+    }
+}
