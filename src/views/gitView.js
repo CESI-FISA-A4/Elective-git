@@ -34,15 +34,15 @@ const errors = {
   }
 
 // Used in commit function
-const getCurrentCommit = async (org, repo, branch = 'main') => {
+const getCurrentCommit = async (owner, repo, branch = 'main') => {
   const { data: refData } = await octokit.git.getRef({
-    owner: org,
+    owner: owner,
     repo,
     ref: `heads/${branch}`,
   })
   const commitSha = refData.object.sha
   const { data: commitData } = await octokit.git.getCommit({
-    owner: org,
+    owner: owner,
     repo,
     commit_sha: commitSha,
   })
@@ -53,9 +53,9 @@ const getCurrentCommit = async (org, repo, branch = 'main') => {
 }
 
 // Used in commit function
-const createBlob = async (content, org, repo) => {
+const createBlob = async (content, owner, repo) => {
     const blobData = await octokit.git.createBlob({
-      owner: org,
+      owner: owner,
       repo,
       content,
       encoding: 'base64',
@@ -81,10 +81,10 @@ const createTree = async (owner, repo, blob, path, parentTreeSha) => {
 }
 
 // Used in commit function
-const createCommit = async (org, repo, message, currentTreeSha, currentCommitSha) => {
+const createCommit = async (owner, repo, message, currentTreeSha, currentCommitSha) => {
   try {
     const commit = await octokit.git.createCommit({
-      owner: org,
+      owner: owner,
       repo,
       message,
       tree: currentTreeSha,
@@ -109,7 +109,7 @@ const setBranchToCommit = (org, repo, branch = `main`, commitSha) =>
 module.exports = {
     getRepos: async(req, res) => {
         const data = await octokit.request("GET https://api.github.com/orgs/{owner}/repos", {
-          owner: 'CESI-FISA-A4',
+          owner: process.env.GITHUB_OWNER,
         });
         let elements = [];
         for(let i in data.data) {
@@ -121,7 +121,7 @@ module.exports = {
       const { repo } = req.params;
       try {
         const data = await octokit.request("GET https://api.github.com/repos/{owner}/{repo}/branches", {
-          owner: 'CESI-FISA-A4',
+          owner: process.env.GITHUB_OWNER,
           repo: repo
         });
         let elements = [];
@@ -137,7 +137,7 @@ module.exports = {
     getFiles: async(req, res) => {
       const { repo, branch } = req.params;
       const data = await octokit.request("GET https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1", {
-          owner: 'CESI-FISA-A4',
+          owner: process.env.GITHUB_OWNER,
           repo: repo,
           branch: branch
         });
@@ -152,13 +152,11 @@ module.exports = {
       if(!path.endsWith('.js') && !path.endsWith('.css')) return errors.NotFound;
       try {
         const data = await octokit.request("GET https://api.github.com/repos/{owner}/{repo}/contents{path}?ref={branch}", {
-          owner: 'CESI-FISA-A4',
+          owner: process.env.GITHUB_OWNER,
           repo: repo,
           path: path,
           branch: branch
         });
-        // https://raw.githubusercontent.com/CESI-FISA-A4/Elective-git/feature%2Fbase/index.js 
-        // fonctionne aussi mais récup juste le fichier
         let content = Buffer.from(data.data.content, 'base64').toString('ascii');
         return {name: data.data.name, path: data.data.path, size: data.data.size, content: content, sha: data.data.sha};  
       }
@@ -170,19 +168,15 @@ module.exports = {
       const { repo, branch } = req.params;
       const path = req.params['*'];
       const { message, content } = req.body;
-      const org = 'CESI-FISA-A4';
       if(!path.endsWith('.js') && !path.endsWith('.css')) return errors.NotFound;
       const contentB64 = Buffer.from(content, 'ascii').toString('base64');
 
-      const currentCommit = await getCurrentCommit(org, repo, branch);
-      const blob = await createBlob(contentB64, org, repo);
-      const newTree = await createTree(org, repo, blob, path, currentCommit.treeSha);
-      const newCommit = await createCommit(org, repo, message, newTree.sha, currentCommit.commitSha);
-      await setBranchToCommit(org, repo, branch, newCommit.sha);
+      const currentCommit = await getCurrentCommit(process.env.GITHUB_OWNER, repo, branch);
+      const blob = await createBlob(contentB64, process.env.GITHUB_OWNER, repo);
+      const newTree = await createTree(process.env.GITHUB_OWNER, repo, blob, path, currentCommit.treeSha);
+      const newCommit = await createCommit(process.env.GITHUB_OWNER, repo, message, newTree.sha, currentCommit.commitSha);
+      await setBranchToCommit(process.env.GITHUB_OWNER, repo, branch, newCommit.sha);
       return `commited : ${newCommit.parents[0].html_url}`;
-    },
-    pullRequest: async(req, res) => {
-      //todo ?
     },
     download: async(req, res) => {
       const { repo, branch } = req.params;
@@ -190,23 +184,21 @@ module.exports = {
       if(!path.endsWith('.js') && !path.endsWith('.css')) return errors.NotFound;
       try {
         const data = await octokit.request("GET https://api.github.com/repos/{owner}/{repo}/contents{path}?ref={branch}", {
-          owner: 'CESI-FISA-A4',
+          owner: process.env.GITHUB_OWNER,
           repo: repo,
           path: path,
           branch: branch
         });
-        // https://raw.githubusercontent.com/CESI-FISA-A4/Elective-git/feature%2Fbase/index.js 
-        // fonctionne aussi mais récup juste le fichier
-        let content = Buffer.from(data.data.content, 'base64');
-        res.header('Content-Length', data.data.size);
-        res.header('Content-Disposition', `attachment; filename=${data.data.name}`);
-        res.type('text/javascript').send(content);
-        return `file ${data.data.name} sended`;  
+        let content = Buffer.from(data.data.content, 'base64').toString('utf8');
+        res.headers({
+          'Content-Length': data.data.size,
+          'Content-Disposition': `attachment; filename=${data.data.name}`,
+          'Content-Type': 'text/plain; charset=utf-8'
+        });
+        return res.send(content);
       }
       catch(e) {
         return errors.NotFound;
       }
-      
     },
-    
 }

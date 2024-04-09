@@ -7,7 +7,7 @@ const gitRoutes = function(instance, opts, next) {
     instance.get('/:repo/:branch', getFiles);
     instance.get('/:repo/:branch/*', getFile);
     instance.put('/:repo/:branch/*', commit);
-    //instance.get('/download/:repo/:branch/*', download);
+    instance.get('/download/:repo/:branch/*', download);
     next();
 };
 

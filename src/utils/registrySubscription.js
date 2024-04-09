@@ -20,7 +20,7 @@ module.exports = {
                         { methods: ["GET"], route: "/:repo", roles: ["developer", "technician", "admin"] },
                         { methods: ["GET"], route: "/:repo/:branch", roles: ["developer", "technician", "admin"] },
                         { methods: ["GET", "PUT"], route: "/:repo/:branch/*", roles: ["developer", "technician", "admin"] },
-                        //{ methods: ["GET"], route: "/download/:repo/:branch/*", roles: ["developer", "technician", "admin"] },
+                        { methods: ["GET"], route: "/download/:repo/:branch/*", roles: ["developer", "technician", "admin"] },
                     ]
                 }
             });
