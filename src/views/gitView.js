@@ -201,4 +201,7 @@ module.exports = {
         return errors.NotFound;
       }
     },
+    ping: async(req, res) => {
+      return
+    }
 }

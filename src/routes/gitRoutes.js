@@ -1,7 +1,8 @@
 const {  } = require('../utils/swagger.schema');
-const { getRepos, getBranches, getFiles, getFile, download, commit } = require('../views/gitView');
+const { getRepos, getBranches, getFiles, getFile, download, commit, ping } = require('../views/gitView');
 const gitRoutes = function(instance, opts, next) {
 
+    instance.get('/ping', ping);
     instance.get('/', getRepos);
     instance.get('/:repo', getBranches);
     instance.get('/:repo/:branch', getFiles);
