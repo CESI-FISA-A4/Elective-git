@@ -6,7 +6,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node -r dotenv/config index.js dotenv_config_path=./.env.production",
-        "start:dev": "node -r dotenv/config index.js dotenv_config_path=./.env.development.local"
+        "start:dev": "node -r dotenv/config index.js dotenv_config_path=./.env.development"
     },
     "repository": {
         "type": "git",
