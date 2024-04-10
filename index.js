@@ -10,6 +10,8 @@ const fastify = require('fastify')();
 setupSwagger(fastify);
 subscribeToApiGateway();
 
+console.log('commit work');
+
 /** -------------------------------------------Account------------------------------------------------- */
 fastify.register(gitRoutes, { prefix: '/api/git' });
 
